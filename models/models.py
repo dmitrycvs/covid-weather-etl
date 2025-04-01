@@ -35,6 +35,7 @@ class ImportLogs(Base):
     file_last_modified_date: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
 
     country: Mapped["Country"] = relationship(back_populates="import_logs")
+    api_import_logs: Mapped[List["ApiImportLogs"]] = relationship(back_populates="import_logs")
 
 class ApiImportLogs(Base):
     __tablename__ = "api_import_logs"
@@ -42,10 +43,12 @@ class ApiImportLogs(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     country_id: Mapped[int] = mapped_column(ForeignKey("country.id"), nullable=False)
     api_id: Mapped[int] = mapped_column(ForeignKey("api.id"), nullable=False)
-    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    import_logs_id: Mapped[int] = mapped_column(ForeignKey("import_logs.id"), nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
     code_response: Mapped[int] = mapped_column(Integer, nullable=False)
-    error_message: Mapped[str] = mapped_column(String, nullable=False)
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
 
     country: Mapped["Country"] = relationship(back_populates="api_import_logs")
     api: Mapped["Api"] = relationship(back_populates="api_import_logs")
+    import_logs: Mapped["ImportLogs"] = relationship(back_populates="api_import_logs")
