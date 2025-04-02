@@ -158,3 +158,6 @@ cython_debug/
 
 # Stored data folder
 S3/
+
+# Logs
+logs/
