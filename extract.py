@@ -20,6 +20,12 @@ def extract_monthly_data(logger, api_type, url, start_date, end_date, timestamp)
         country_id = get_or_create_country(country_name, country_data['iso'])
         data = []
         current_date = start_date
+        
+        folder_path = f"S3/raw/batch_{timestamp}"
+        os.makedirs(folder_path, exist_ok=True)
+        file_name = f"{country_data['iso']}_{api_type}_MONTHLY_{timestamp}"
+        file_path = os.path.join(folder_path, file_name)
+        import_log_id = insert_import_log((country_id, timestamp, file_path, file_name, datetime.now(), datetime.now(), start_date, end_date))
 
         while current_date <= end_date:
             date_str = current_date.strftime("%Y-%m-%d")
@@ -36,30 +42,20 @@ def extract_monthly_data(logger, api_type, url, start_date, end_date, timestamp)
                     data.append([result])
                 code_response = response.status_code
                 error_message = None
-                logger.debug(f"Successfully fetched {api_type} data for {country_name} on {date_str}")
+                insert_api_import_log((country_id, api_id, import_log_id, start_time, end_time, code_response, error_message))
+                logger.info(f"Successfully fetched {api_type} data for {country_name} on {date_str}")
             except requests.exceptions.HTTPError as e:
                 code_response = e.response.status_code
                 error_message = f"Client Error: {e.response.reason} for url: {e.response.url}"
-                logger.error(f"HTTP Error while fetching {api_type} data for {country_name}: {error_message}")
-                break
-            except Exception as e:
-                logger.error(f"Unexpected error fetching {api_type} data for {country_name}: {str(e)}")
-                break
+                insert_api_import_log((country_id, api_id, import_log_id, start_time, end_time, code_response, error_message))
+                logger.error(f"HTTP Error while fetching {api_type} data for {country_name}: {error_message}")            
             
             sleep(1)
             current_date += timedelta(days=1)
 
         if data:
-            folder_path = f"S3/raw/batch_{timestamp}"
-            os.makedirs(folder_path, exist_ok=True)
-            file_name = f"{country_data['iso']}_{api_type}_MONTHLY_{timestamp}"
-            file_path = os.path.join(folder_path, file_name)
-
             with open(file_path, "w", encoding="utf-8") as file:
                 json.dump({"data": data}, file, indent=2)
-
-            import_log_id = insert_import_log((country_id, timestamp, file_path, file_name, datetime.now(), datetime.now()))
-            insert_api_import_log((country_id, api_id, import_log_id, start_time, end_time, code_response, error_message))
             logger.info(f"Successfully added {api_type} data for {country_name} to PostgreSQL")
         else:
             logger.error(f"Error! {api_type} data for {country_name} was NOT added to PostgreSQL")
@@ -82,7 +78,7 @@ def extract():
         extract_monthly_data(logger, "COVID", os.getenv("COVID_API_URL"), start_date, end_date, timestamp)
         logger.info("Extracting process completed successfully")
     except Exception as e:
-        logger.error(f"Extracting process failed with error: {str(e)}", exc_info=True)
+        logger.error(f"Extracting process failed with error: {str(e)}")
         raise
 
 
