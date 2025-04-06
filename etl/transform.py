@@ -1,6 +1,6 @@
 from database import get_file_path_for_period
 from utils import indentify_api_type, setup_logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 
@@ -40,21 +40,24 @@ def process_file(logger, file_path):
     except Exception as e:
         logger.error(f"Error processing file {file_path}: {e}")
 
-def transform():
+def transformation(**kwargs):
     logger = setup_logging()
     logger.info("Starting transformation process")
 
     try:
-        start_date = datetime(2021, 4, 1)
-        end_date = datetime(2021, 4, 3)
+        execution_date = datetime.strptime(kwargs["ds"], "%Y-%m-%d")
+        start_date = execution_date
+        end_date = start_date + timedelta(days=30)
+
+        logger.info(f"Processing transformation for the period: {start_date} to {end_date}")
+        
         period_file_paths = get_file_path_for_period(start_date, end_date)
         file_paths = [os.path.join(directory_path, file_name) for directory_path, file_name in period_file_paths]
 
         for file_path in file_paths:
             process_file(logger, file_path)
+
         logger.info("Transformation process completed successfully")
     except Exception as e:
         logger.error(f"Transformation process failed with error: {e}")
         raise
-
-transform()
