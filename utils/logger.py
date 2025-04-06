@@ -6,7 +6,7 @@ def setup_logging():
     os.makedirs('logs', exist_ok=True)
     
     logger = logging.getLogger('covid_weather_etl')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     
     file_handler = RotatingFileHandler(
         'logs/etl_process.log', 

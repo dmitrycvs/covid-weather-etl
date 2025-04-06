@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from time import time, sleep
 from datetime import datetime, timedelta
 from data.countries import countries
@@ -23,15 +24,14 @@ def extract_monthly_data(logger, api_type, url, start_date, end_date, timestamp)
         
         folder_path = f"S3/raw/batch_{timestamp}"
         os.makedirs(folder_path, exist_ok=True)
-        file_name = f"{country_data['iso']}_{api_type}_MONTHLY_{timestamp}"
+        file_name = f"{country_data['iso']}_{api_type}_MONTHLY"
         file_path = os.path.join(folder_path, file_name)
-        import_log_id = insert_import_log((country_id, timestamp, file_path, file_name, datetime.now(), datetime.now(), start_date, end_date))
+        import_log_id = insert_import_log((country_id, timestamp, folder_path, file_name, datetime.now(), datetime.now(), start_date, end_date))
 
         while current_date <= end_date:
             date_str = current_date.strftime("%Y-%m-%d")
-            full_url = (f"{url}?station={country_data['meteostat_id']}&start={date_str}&end={date_str}" if api_type == "WEATHER" 
+            full_url = (f"{url}?lat={country_data['lat']}&lon={country_data['lon']}&start={date_str}&end={date_str}" if api_type == "WEATHER" 
                         else f"{url}?iso={country_data['iso']}&date={date_str}")
-            
             try:
                 start_time = datetime.now()
                 response = requests.get(full_url, headers=headers)
@@ -74,8 +74,9 @@ def extract():
         timestamp = round(time())
         
         logger.info(f"Starting data extraction for period: {start_date} to {end_date}")
-        extract_monthly_data(logger, "WEATHER", os.getenv("WEATHER_API_URL"), start_date, end_date, timestamp)
-        extract_monthly_data(logger, "COVID", os.getenv("COVID_API_URL"), start_date, end_date, timestamp)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            executor.submit(extract_monthly_data, logger, "WEATHER", os.getenv("WEATHER_API_URL"), start_date, end_date, timestamp)
+            executor.submit(extract_monthly_data, logger, "COVID", os.getenv("COVID_API_URL"), start_date, end_date, timestamp)
         logger.info("Extracting process completed successfully")
     except Exception as e:
         logger.error(f"Extracting process failed with error: {str(e)}")

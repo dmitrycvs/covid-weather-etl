@@ -30,3 +30,14 @@ def insert_api_import_log(data):
     VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
     execute_query(query, data)
+
+def get_file_path_for_period(start_date, end_date):
+    query = f"""
+    SELECT import_directory_name, import_file_name FROM {schema_name}.import_logs
+    WHERE start_backfill_date = %s AND end_backfill_date = %s
+    """
+    result = execute_query(query, (start_date, end_date), fetch=True)
+    if result:
+        return result
+    
+    return None

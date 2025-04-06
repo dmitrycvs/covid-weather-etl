@@ -2,7 +2,7 @@ from sqlglot import parse_one
 import psycopg2
 from .utils import execute_query, connect_db
 
-schema_name = "log"
+schema_name = "log_extract"
 
 country_sql = f"""
 CREATE TABLE {schema_name}.country (
