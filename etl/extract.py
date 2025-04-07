@@ -1,12 +1,13 @@
-from concurrent.futures import ThreadPoolExecutor
-from time import time, sleep
+from time import sleep
 from datetime import datetime, timedelta
 from data.countries import countries
-from database import get_or_create_api, get_or_create_country, insert_import_log, insert_api_import_log, generate_tables
-from utils import setup_logging
+from database import get_or_create_api, get_or_create_country, insert_import_log, insert_api_import_log
 import os
 import json
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def extract_monthly_data(logger, api_type, url, start_date, end_date, timestamp):
     logger.info(f"Starting data extraction for {api_type} from {start_date} to {end_date}")
@@ -59,44 +60,3 @@ def extract_monthly_data(logger, api_type, url, start_date, end_date, timestamp)
             logger.info(f"Successfully added {api_type} data for {country_name} to PostgreSQL")
         else:
             logger.error(f"Error! {api_type} data for {country_name} was NOT added to PostgreSQL")
-
-
-def extraction(**kwargs):
-    logger = setup_logging()
-    logger.info("Starting extracting process")
-    
-    try:
-        logger.info("Generating tables")
-        generate_tables(logger)
-        
-        execution_date = datetime.strptime(kwargs["ds"], "%Y-%m-%d")
-        start_date = execution_date
-        end_date = start_date + timedelta(days=30)
-        timestamp = round(time())
-
-        logger.info(f"Extracting data for period: {start_date} to {end_date}")
-        
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            executor.submit(
-                extract_monthly_data,
-                logger,
-                "WEATHER",
-                os.getenv("WEATHER_API_URL"),
-                start_date,
-                end_date,
-                timestamp,
-            )
-            executor.submit(
-                extract_monthly_data,
-                logger,
-                "COVID",
-                os.getenv("COVID_API_URL"),
-                start_date,
-                end_date,
-                timestamp,
-            )
-
-        logger.info("Extracting process completed successfully")
-    except Exception as e:
-        logger.error(f"Extracting process failed with error: {str(e)}")
-        raise
