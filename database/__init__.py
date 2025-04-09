@@ -1,3 +1,3 @@
 from database.utils import connect_db, execute_query
-from database.schema import generate_tables, schema_name
-from database.operations import get_or_create_api, get_or_create_country, insert_import_log, insert_api_import_log, get_file_path_for_period
+from database.schema import generate_extract_schema_and_tables, generate_transform_schema_and_tables, generate_load_schema_and_tables, extract_schema_name, transform_schema_name, load_schema_name
+from database.operations import get_or_create_api_id, get_or_create_country_id, get_country_name, insert_import_log, insert_api_import_log, insert_transform_logs, get_file_path_for_period, insert_weather, insert_covid, insert_load_logs

@@ -1,2 +1,2 @@
 from .logger import setup_logging
-from .api import indentify_api_type
+from .api import identify_api_type
