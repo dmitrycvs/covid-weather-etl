@@ -161,3 +161,5 @@ S3/
 
 # Logs
 logs/
+
+streamlit/

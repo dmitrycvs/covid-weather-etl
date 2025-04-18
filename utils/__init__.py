@@ -1,2 +1,5 @@
 from .logger import setup_logging
-from .api import identify_api_type
+
+__all__ = [
+    "setup_logging",
+]
