@@ -33,9 +33,9 @@ class Loader(BaseETL):
 
             try:
                 if api_type == "weather":
-                    exists = db.check_weather_record_exists(entry_date, entry_country)
+                    exists = db.check_weather_record_exists(entry)
                 elif api_type == "covid":
-                    exists = db.check_covid_record_exists(entry_date, entry_country)
+                    exists = db.check_covid_record_exists(entry)
                 else:
                     self.logger.warning(f"Unknown API type: {api_type}")
                     continue

@@ -126,14 +126,18 @@ def get_info_for_date_range(start_date, end_date, transformed=False):
     return execute_query(query, (start_date, end_date), fetch=True)
 
 
-def get_import_id_if_backfill_date_exists(date, country_id):
+def get_import_id_if_backfill_date_exists(date, country_id, api_id):
     query = f"""
     SELECT i.id
     FROM {extract_schema_name}.import_logs AS i
-    WHERE i.backfill_date = %s AND i.country_id = %s
+    JOIN {extract_schema_name}.api_import_logs AS a
+      ON i.id = a.import_logs_id
+    WHERE i.backfill_date = %s
+      AND i.country_id = %s
+      AND a.api_id = %s
     """
 
-    result = execute_query(query, (date, country_id), fetch=True)
+    result = execute_query(query, (date, country_id, api_id), fetch=True)
     return result[0][0] if result else None
 
 def get_transform_logs_id(import_id):
@@ -149,7 +153,7 @@ def get_transform_logs_id(import_id):
 def update_import_logs(data):
     query = f"""
     UPDATE {extract_schema_name}.import_logs
-    SET import_directory_name = %s, file_last_modified_date = %s
+    SET batch_timestamp = %s, import_directory_name = %s, import_file_name = %s, file_last_modified_date = %s 
     WHERE id = %s
     """
     execute_query(query, data)
@@ -157,25 +161,41 @@ def update_import_logs(data):
 def update_transform_logs(data):
     query = f"""
     UPDATE {transform_schema_name}.logs
-    SET processed_directory_name = %s, status = %s
+    SET processed_directory_name = %s, processed_file_name = %s, status = %s
     WHERE id = %s
     """
     execute_query(query, data)
 
-def check_weather_record_exists(date, country):
+def check_weather_record_exists(data_dict):
     query = f"""
     SELECT COUNT(*) FROM {load_schema_name}.weather 
     WHERE date = %s AND country = %s
+      AND tavg = %s AND tmin = %s AND tmax = %s
     """
-    result = execute_query(query, (date, country), fetch=True)
+    values = (
+        data_dict.get("date"),
+        data_dict.get("country"),
+        data_dict.get("tavg"),
+        data_dict.get("tmin"),
+        data_dict.get("tmax")
+    )
+    result = execute_query(query, values, fetch=True)
     return result[0][0] > 0
 
-def check_covid_record_exists(date, country):
+def check_covid_record_exists(data_dict):
     query = f"""
     SELECT COUNT(*) FROM {load_schema_name}.covid 
     WHERE date = %s AND country = %s
+      AND confirmed = %s AND deaths = %s AND recovered = %s
     """
-    result = execute_query(query, (date, country), fetch=True)
+    values = (
+        data_dict.get("date"),
+        data_dict.get("country"),
+        data_dict.get("confirmed"),
+        data_dict.get("deaths"),
+        data_dict.get("recovered")
+    )
+    result = execute_query(query, values, fetch=True)
     return result[0][0] > 0
 
 def identify_api_type(transform_logs_id=None, import_logs_id=None):

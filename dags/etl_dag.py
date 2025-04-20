@@ -9,14 +9,12 @@ from time import time
 from airflow.decorators import dag, task
 from airflow.models import Variable
 
-from etl.extractor import Extractor
-from etl.transformer import Transformer
-from etl.loader import Loader
+from etl import Extractor, Transformer, Loader
 from utils import setup_logging
 
 default_args = {
-    "retries": 5,
-    "retry_delay": timedelta(minutes=1),
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
 }
 
 
@@ -37,7 +35,7 @@ def etl_dag():
 
     @task
     def calculate_end_date(start_date):
-        return start_date + timedelta(days=2)
+        return start_date + timedelta(days=29)
 
     @task
     def set_start_date(date):
@@ -51,22 +49,25 @@ def etl_dag():
         
         weather_extractor = Extractor("WEATHER", os.getenv("WEATHER_API_URL"), start_date, end_date, timestamp, logger)
         weather_extractor.run()
+
     @task 
     def transform(start_date, end_date, logger):
         transformer = Transformer(start_date, end_date, logger)
         transformer.run()
+
     @task
     def load(start_date, end_date, logger):
         loader = Loader(start_date, end_date, logger)
         loader.run()
 
+    logger = setup_logging()
     start = get_start_date()
     end = calculate_end_date(start)
-    logger = setup_logging()
 
     extract_task = extract(start, end, logger)
     transform_task = transform(start, end, logger)
     load_task = load(start, end, logger)
+    
     update_start_date = set_start_date(end)
 
     extract_task >> transform_task >> load_task >> update_start_date

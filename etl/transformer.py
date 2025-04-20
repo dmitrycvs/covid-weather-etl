@@ -6,7 +6,6 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import database as db
-import utils as u
 
 
 class Transformer(BaseETL):
@@ -29,20 +28,27 @@ class Transformer(BaseETL):
         has_empty = False
 
         for idx, content in enumerate(json_data["data"]):
-            entry = content[0]
+            entry = content[0] if isinstance(content, list) else content
             entry["country"] = country
 
             if api_type == "covid":
-                entry.pop("region", None)
-                entry.pop("last_update", None)
-                if any(v is None for v in entry.values() if v != 0):
+                if any(v is None for v in entry.values()):
                     has_empty = True
                     self.logger.warning(f"Empty field detected in COVID entry {idx} for {country}")
+                    break
+
+                entry.pop("last_update", None)
+                entry.pop("region", None)
+
             elif api_type == "weather":
                 for k, v in entry.items():
-                    if not v and v != 0:
+                    if (k == "snow" or k == "tsun") and v is None:
                         entry[k] = 0.0
-                        self.logger.debug(f"Set missing weather value to 0.0 for key: {k} in entry #{idx}")
+                        self.logger.debug(f"Set missing weather value to 0.0 for key: {k} in entry {idx}")
+                    elif v is None and k != "snow" and k != "tsun":
+                        has_empty = True
+                        self.logger.warning(f"Empty field detected in weather entry {idx} for {country}")
+                        break
 
         if has_empty:
             raise ValueError(f"Corrupted data in {file_path} for country: {country}")
@@ -57,7 +63,7 @@ class Transformer(BaseETL):
 
         transform_log_id = db.get_transform_logs_id(import_id)
         if transform_log_id:
-            db.update_transform_logs((dir_name, "Processed", transform_log_id))
+            db.update_transform_logs((dir_name, file_name, "Processed", transform_log_id))
         else:
             db.insert_transform_logs((import_id, dir_name, file_name, "Processed"))
 
@@ -72,6 +78,8 @@ class Transformer(BaseETL):
         self.logger.debug(f"Fetched {len(data)} files to process")
 
         processed = []
+        error_count = 0
+        total_count = len(data)
 
         for import_id, country_id, dir_name, file_name in data:
             file_path = os.path.join(dir_name, file_name)
@@ -80,6 +88,7 @@ class Transformer(BaseETL):
                 result_path = self._process(import_id, country_id, file_path)
                 processed.append(result_path)
             except Exception as e:
+                error_count += 1
                 with open(file_path) as f:
                     json_data = json.load(f)
 
@@ -94,11 +103,21 @@ class Transformer(BaseETL):
 
                 transform_log_id = db.get_transform_logs_id(import_id)
                 if transform_log_id:
-                    db.update_transform_logs((dir_name, "Error", transform_log_id))
+                    db.update_transform_logs((dir_name, file_name, "Error", transform_log_id))
                 else:
                     db.insert_transform_logs((import_id, dir_name, file_name, "Error"))
 
                 self.logger.error(f"Failed to transform {file_path}: {e}")
+
+        if total_count > 0:
+            error_percentage = (error_count / total_count) * 100
+            self.logger.info(f"Error percentage: {error_percentage:.2f}% ({error_count} out of {total_count})")
+            
+            if error_percentage >= 50:
+                message = (f"WARNING: High error rate detected in transformation process!\n"
+                            f"Error rate: {error_percentage:.2f}% ({error_count} out of {total_count} files)\n"
+                            f"Date range: {self.start_date} to {self.end_date}")
+                self.logger.critical(message)
 
         self.logger.info(f"Transformation completed. {len(processed)} files processed successfully.")
         return processed

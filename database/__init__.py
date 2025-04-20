@@ -26,31 +26,3 @@ from database.schema import (
     transform_schema_name,
 )
 from database.utils import connect_db, execute_query
-
-__all__ = [
-    "get_import_id_if_backfill_date_exists",
-    "connect_db",
-    "execute_query",
-    "extract_schema_name",
-    "generate_extract_schema_and_tables",
-    "generate_load_schema_and_tables",
-    "generate_transform_schema_and_tables",
-    "get_country_name",
-    "get_info_for_date_range",
-    "get_or_create_api_id",
-    "get_or_create_country_id",
-    "insert_api_import_log",
-    "insert_covid",
-    "insert_import_log",
-    "insert_load_logs",
-    "insert_transform_logs",
-    "insert_weather",
-    "load_schema_name",
-    "transform_schema_name",
-    "update_import_logs",
-    "get_transform_logs_id",
-    "update_transform_logs",
-    "check_weather_record_exists",
-    "check_covid_record_exists",
-    "identify_api_type"
-]

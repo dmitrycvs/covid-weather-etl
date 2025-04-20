@@ -1,8 +1,24 @@
 [tool.ruff]
-line-length = 120
-fix = true
-lint.select = ["E", "F", "I", "UP", "B", "C4", "SIM", "RUF"]
-lint.ignore = ["E501"]
+line-length = 90
+fix = false
+lint.select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "SIM",
+    "RUF",
+    "PL",
+    "ANN",
+    "ARG",
+    "N",
+    "ANN",
+]
+exclude = ["tests", "streamlit", "notebooks"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -19,4 +35,4 @@ show_error_codes = true
 
 [tool.bandit]
 skips = ["B101", "B608"]
-exclude_dirs = ["tests"]
+exclude_dirs = ["tests", "streamlit"]
