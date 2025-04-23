@@ -26,18 +26,26 @@ This project is an ETL (Extract, Transform, Load) pipeline designed to process a
 3. Set up API keys and environment variables
 
 ## Project Structure
-
 ```
 covid-weather-etl/
 ├── S3/                 # Raw and processed data
 ├── dags/               # Airflow Dags stored here
 ├── tests/              # Unit tests
+├── models/             # ML models and predictions made
+├── notebooks/          # .ipynb notebooks, for the Data Science
+├── streamlit/          # Dashboards made using Streamlit
 ├── requirements.txt    # Python dependencies
 ├── README.md           # Project documentation
-├── notebooks           # .ipynb notebooks, for the Data Science
-├── streamlit           # Dashboards made using Streamlit
 └── .env                # Environment variables
 ```
+
+### Code Quality
+
+| Security Linter | Code Formatting | Type Checking | Code Linting |
+| --- | --- | --- | --- |
+| [`bandit`](https://github.com/PyCQA/bandit) | [`ruff-format`](https://github.com/astral-sh/ruff) | [`mypy`](https://github.com/python/mypy) | [`ruff`](https://github.com/astral-sh/ruff) |
+
+---
 
 ## Acknowledgments
 
