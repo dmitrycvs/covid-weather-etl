@@ -6,6 +6,7 @@ import utils as u
 import os
 from time import time
 
+
 def main():
     logger = u.setup_logging()
     start_date = datetime(2021, 4, 1)
@@ -24,6 +25,7 @@ def main():
         logger.info("ETL Pipeline finished successfully")
     except Exception as e:
         logger.error(f"ETL Pipeline failed: {e}")
+
 
 if __name__ == "__main__":
     main()

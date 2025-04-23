@@ -7,7 +7,9 @@ def get_or_create_api_id(api_type):
     result = execute_query(query, (api_type,), fetch=True)
     if result:
         return result[0][0]
-    insert_query = f"INSERT INTO {extract_schema_name}.api (type) VALUES (%s) RETURNING id"
+    insert_query = (
+        f"INSERT INTO {extract_schema_name}.api (type) VALUES (%s) RETURNING id"
+    )
     return execute_query(insert_query, (api_type,), fetch=True)[0][0]
 
 
@@ -77,7 +79,7 @@ def insert_weather(data_dict):
         data_dict.get("wpgt"),
         data_dict.get("pres"),
         data_dict.get("tsun"),
-        data_dict.get("country")
+        data_dict.get("country"),
     )
     execute_query(query, values)
 
@@ -94,14 +96,14 @@ def insert_covid(data_dict):
         data_dict.get("date"),
         data_dict.get("confirmed"),
         data_dict.get("deaths"),
-        data_dict.get("recovered"), 
+        data_dict.get("recovered"),
         data_dict.get("confirmed_diff"),
         data_dict.get("deaths_diff"),
         data_dict.get("recovered_diff"),
         data_dict.get("active"),
         data_dict.get("active_diff"),
         data_dict.get("fatality_rate"),
-        data_dict.get("country")
+        data_dict.get("country"),
     )
     execute_query(query, values)
 
@@ -140,6 +142,7 @@ def get_import_id_if_backfill_date_exists(date, country_id, api_id):
     result = execute_query(query, (date, country_id, api_id), fetch=True)
     return result[0][0] if result else None
 
+
 def get_transform_logs_id(import_id):
     query = f"""
     SELECT t.id
@@ -150,6 +153,7 @@ def get_transform_logs_id(import_id):
     result = execute_query(query, (import_id,), fetch=True)
     return result[0][0] if result else None
 
+
 def update_import_logs(data):
     query = f"""
     UPDATE {extract_schema_name}.import_logs
@@ -158,6 +162,7 @@ def update_import_logs(data):
     """
     execute_query(query, data)
 
+
 def update_transform_logs(data):
     query = f"""
     UPDATE {transform_schema_name}.logs
@@ -165,6 +170,7 @@ def update_transform_logs(data):
     WHERE id = %s
     """
     execute_query(query, data)
+
 
 def check_weather_record_exists(data_dict):
     query = f"""
@@ -177,10 +183,11 @@ def check_weather_record_exists(data_dict):
         data_dict.get("country"),
         data_dict.get("tavg"),
         data_dict.get("tmin"),
-        data_dict.get("tmax")
+        data_dict.get("tmax"),
     )
     result = execute_query(query, values, fetch=True)
     return result[0][0] > 0
+
 
 def check_covid_record_exists(data_dict):
     query = f"""
@@ -193,10 +200,11 @@ def check_covid_record_exists(data_dict):
         data_dict.get("country"),
         data_dict.get("confirmed"),
         data_dict.get("deaths"),
-        data_dict.get("recovered")
+        data_dict.get("recovered"),
     )
     result = execute_query(query, values, fetch=True)
     return result[0][0] > 0
+
 
 def identify_api_type(transform_logs_id=None, import_logs_id=None):
     if transform_logs_id:
@@ -220,9 +228,9 @@ def identify_api_type(transform_logs_id=None, import_logs_id=None):
         params = (import_logs_id,)
     else:
         return None
-    
+
     result = execute_query(query, params, fetch=True)
     if result:
         return result[0][0].lower()
-    
+
     return None

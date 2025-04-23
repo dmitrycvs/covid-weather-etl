@@ -15,7 +15,7 @@ from database.operations import (
     update_transform_logs,
     check_weather_record_exists,
     check_covid_record_exists,
-    identify_api_type
+    identify_api_type,
 )
 from database.schema import (
     extract_schema_name,

@@ -7,6 +7,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import database as db
 
+
 class Loader(BaseETL):
     def __init__(self, start_date, end_date, logger=None):
         super().__init__(logger)
@@ -27,7 +28,7 @@ class Loader(BaseETL):
 
         for idx, content in enumerate(json_data["data"]):
             entry = content[0] if isinstance(content, list) else content
-            
+
             entry_date = entry.get("date")
             entry_country = entry.get("country")
 
@@ -46,12 +47,18 @@ class Loader(BaseETL):
                     elif api_type == "covid":
                         db.insert_covid(entry)
                     inserted_count += 1
-                    self.logger.debug(f"Inserted {api_type} record for {entry_country} on {entry_date}")
+                    self.logger.debug(
+                        f"Inserted {api_type} record for {entry_country} on {entry_date}"
+                    )
                 else:
                     skipped_count += 1
-                    self.logger.warning(f"Duplicate {api_type} record for {entry_country} on {entry_date}")
+                    self.logger.warning(
+                        f"Duplicate {api_type} record for {entry_country} on {entry_date}"
+                    )
             except Exception as e:
-                self.logger.error(f"Failed to load entry {idx} for {entry_country} on {entry_date}: {e}")
+                self.logger.error(
+                    f"Failed to load entry {idx} for {entry_country} on {entry_date}: {e}"
+                )
 
         db.insert_load_logs((transform_id, "Success"))
         self.logger.info(
@@ -59,10 +66,14 @@ class Loader(BaseETL):
         )
 
     def run(self):
-        self.logger.info(f"Starting load process for range {self.start_date} to {self.end_date}")
+        self.logger.info(
+            f"Starting load process for range {self.start_date} to {self.end_date}"
+        )
         db.generate_load_schema_and_tables(self.logger)
 
-        records = db.get_info_for_date_range(self.start_date, self.end_date, transformed=True)
+        records = db.get_info_for_date_range(
+            self.start_date, self.end_date, transformed=True
+        )
         self.logger.debug(f"Retrieved {len(records)} records to load")
 
         processed = set()

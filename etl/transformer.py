@@ -34,7 +34,9 @@ class Transformer(BaseETL):
             if api_type == "covid":
                 if any(v is None for v in entry.values()):
                     has_empty = True
-                    self.logger.warning(f"Empty field detected in COVID entry {idx} for {country}")
+                    self.logger.warning(
+                        f"Empty field detected in COVID entry {idx} for {country}"
+                    )
                     break
 
                 entry.pop("last_update", None)
@@ -44,10 +46,14 @@ class Transformer(BaseETL):
                 for k, v in entry.items():
                     if (k == "snow" or k == "tsun") and v is None:
                         entry[k] = 0.0
-                        self.logger.debug(f"Set missing weather value to 0.0 for key: {k} in entry {idx}")
+                        self.logger.debug(
+                            f"Set missing weather value to 0.0 for key: {k} in entry {idx}"
+                        )
                     elif v is None and k != "snow" and k != "tsun":
                         has_empty = True
-                        self.logger.warning(f"Empty field detected in weather entry {idx} for {country}")
+                        self.logger.warning(
+                            f"Empty field detected in weather entry {idx} for {country}"
+                        )
                         break
 
         if has_empty:
@@ -67,11 +73,15 @@ class Transformer(BaseETL):
         else:
             db.insert_transform_logs((import_id, dir_name, file_name, "Processed"))
 
-        self.logger.info(f"Transformation successful. Processed file saved to: {output_path}")
+        self.logger.info(
+            f"Transformation successful. Processed file saved to: {output_path}"
+        )
         return output_path
 
     def run(self):
-        self.logger.info(f"Starting transformation from {self.start_date} to {self.end_date}")
+        self.logger.info(
+            f"Starting transformation from {self.start_date} to {self.end_date}"
+        )
         db.generate_transform_schema_and_tables(self.logger)
 
         data = db.get_info_for_date_range(self.start_date, self.end_date)
@@ -103,7 +113,9 @@ class Transformer(BaseETL):
 
                 transform_log_id = db.get_transform_logs_id(import_id)
                 if transform_log_id:
-                    db.update_transform_logs((dir_name, file_name, "Error", transform_log_id))
+                    db.update_transform_logs(
+                        (dir_name, file_name, "Error", transform_log_id)
+                    )
                 else:
                     db.insert_transform_logs((import_id, dir_name, file_name, "Error"))
 
@@ -111,13 +123,19 @@ class Transformer(BaseETL):
 
         if total_count > 0:
             error_percentage = (error_count / total_count) * 100
-            self.logger.info(f"Error percentage: {error_percentage:.2f}% ({error_count} out of {total_count})")
-            
+            self.logger.info(
+                f"Error percentage: {error_percentage:.2f}% ({error_count} out of {total_count})"
+            )
+
             if error_percentage >= 50:
-                message = (f"WARNING: High error rate detected in transformation process!\n"
-                            f"Error rate: {error_percentage:.2f}% ({error_count} out of {total_count} files)\n"
-                            f"Date range: {self.start_date} to {self.end_date}")
+                message = (
+                    f"WARNING: High error rate detected in transformation process!\n"
+                    f"Error rate: {error_percentage:.2f}% ({error_count} out of {total_count} files)\n"
+                    f"Date range: {self.start_date} to {self.end_date}"
+                )
                 self.logger.critical(message)
 
-        self.logger.info(f"Transformation completed. {len(processed)} files processed successfully.")
+        self.logger.info(
+            f"Transformation completed. {len(processed)} files processed successfully."
+        )
         return processed

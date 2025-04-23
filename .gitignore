@@ -165,5 +165,8 @@ S3/
 # Logs
 logs/
 
+# Models
+models/
+
 streamlit/
 notebooks/
