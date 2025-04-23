@@ -11,7 +11,6 @@ import joblib
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 from pmdarima import auto_arima
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-import json
 import base64
 import io
 
@@ -266,8 +265,9 @@ def export_forecast_results(model_base64, data, forecast_results, country_name):
     csv_path = f"models/forecasts/{country_name}/forecast_results.csv"
     forecast_df.to_csv(csv_path)
 
-    metrics_path = f"models/forecasts/{country_name}/forecast_metrics.json"
     metrics = {
+        "country": country_name,
+        "model": "SARIMAX",
         "target_variable": target,
         "mae": forecast_results["metrics"]["mae"],
         "rmse": forecast_results["metrics"]["rmse"],
@@ -276,15 +276,10 @@ def export_forecast_results(model_base64, data, forecast_results, country_name):
             - np.array(forecast_results["forecast_lower"])
         ),
     }
+    logger.info(f"Forecast metrics are: {metrics}")
+    logger.info(f"Exported forecast results for {country_name} to {csv_path}")
 
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=4)
-
-    logger.info(
-        f"Exported forecast results for {country_name} to {csv_path} and {metrics_path}"
-    )
-
-    return {"model_path": model_path, "csv_path": csv_path, "metrics_path": metrics_path}
+    return {"model_path": model_path, "csv_path": csv_path}
 
 
 countries = ["Moldova", "Germany", "Italy"]

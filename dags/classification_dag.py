@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report
 from xgboost import XGBClassifier
-import json
 import base64
 import io
 
@@ -123,7 +122,6 @@ def evaluate_model(model_base64, data, country_name):
 
     y_pred = model.predict(data["X_test"])
     report = classification_report(data["y_test"], y_pred, output_dict=True)
-    logger.info(f"Evaluation for {country_name}: Accuracy={report['accuracy']:.4f}")
     return {"report": report, "predictions": y_pred.tolist(), "actual": data["y_test"]}
 
 
@@ -131,18 +129,15 @@ def evaluate_model(model_base64, data, country_name):
 def export_model(model_base64, country_name, evaluation):
     os.makedirs(f"models/classification/{country_name}", exist_ok=True)
     model_path = f"models/classification/{country_name}/rain_prediction_model.joblib"
-    eval_path = f"models/classification/{country_name}/evaluation_results.json"
 
     model_bytes = base64.b64decode(model_base64)
 
     with open(model_path, "wb") as f:
         f.write(model_bytes)
 
-    with open(eval_path, "w") as f:
-        json.dump(evaluation["report"], f)
+    logger.info(f"Results: {evaluation['report']}")
 
-    logger.info(f"Exported model to {model_path} and evaluation to {eval_path}")
-    return {"model_path": model_path, "evaluation_path": eval_path}
+    return model_path
 
 
 @task
